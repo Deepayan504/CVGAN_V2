@@ -1,0 +1,26 @@
+cmip6-sst-prediction/
+├── README.md
+├── requirements.txt          # or environment.yml
+├── config.yaml               # all paths and hyperparameters
+├── notebooks/
+│   └── train_cmip6_sst.ipynb
+├── src/
+│   ├── __init__.py
+│   ├── data/
+│   │   ├── __init__.py
+│   │   └── cmip6_loader.py   # move data loading functions here
+│   ├── models/
+│   │   ├── __init__.py
+│   │   ├── generator.py
+│   │   └── discriminator.py
+│   └── training/
+│       ├── __init__.py
+│       ├── losses.py
+│       └── trainer.py
+├── scripts/
+│   └── train.py              # CLI entry point (replaces __main__ block)
+├── tests/
+│   └── test_data_loading.py
+├── outputs/
+│   └── .gitkeep
+└── .gitignore

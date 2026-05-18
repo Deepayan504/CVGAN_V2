@@ -1,0 +1,102 @@
+# =============================================================================
+# CMIP6 SST Prediction - Configuration File
+# =============================================================================
+# All paths are relative to the project root directory.
+# Override any value via CLI if using Hydra:
+#   python scripts/train.py data.n_train=1000 training.num_epochs=50
+# =============================================================================
+
+
+# -----------------------------------------------------------------------------
+# Paths
+# -----------------------------------------------------------------------------
+paths:
+  # Input data
+  dataset: "data/raw/EC_Earth3_CC_historical_1850_2014.nc"
+  mask: "data/raw/mask.npy"
+
+  # Alternative CMIP6 datasets (swap 'dataset' above to use these)
+  # dataset: "data/raw/GISS-E2-1-H_historical_1850_2014.nc"
+  # dataset: "data/raw/MIROC6_historical_1850_2014.nc"
+
+  # Outputs
+  checkpoint_dir: "outputs/checkpoints"
+  plots_dir: "outputs/plots"
+  logs_dir: "outputs/logs"
+
+
+# -----------------------------------------------------------------------------
+# Data
+# -----------------------------------------------------------------------------
+data:
+  # Ensemble member to select (0-indexed) when multiple ensembles are present
+  ensemble_id: 0
+
+  # Train/val split sizes (remaining samples become test set)
+  # 1428 = 119 years (1850–1968) × 12 months
+  n_train: 1428
+  n_val: 100          # months 1429–1528
+  # n_test: remainder  # automatically inferred
+
+  # Normalization: "standardize" (z-score) | "minmax" (0–1) | "none"
+  normalize: "standardize"
+
+  # Detrending: "linear" | "constant" | null (disabled)
+  detrend: null
+
+
+# -----------------------------------------------------------------------------
+# Model
+# -----------------------------------------------------------------------------
+model:
+  # Number of previous months fed as input to the Generator
+  num_input_months: 3
+
+  # in_channels = num_input_months + 2 (seasonal sin/cos encoding) — derived automatically
+  generator_features: 128    # base feature width in the Generator U-Net
+  out_channels: 1            # single-channel SST output
+
+
+# -----------------------------------------------------------------------------
+# Training
+# -----------------------------------------------------------------------------
+training:
+  num_epochs: 200
+  batch_size: 16
+  num_workers: 4             # DataLoader worker processes; set to 0 to disable multiprocessing
+
+  # Optimizer (Adam)
+  lr: 0.0002
+  adam_beta1: 0.5
+  adam_beta2: 0.999
+
+  # LR scheduler (StepLR)
+  lr_step_size: 30           # decay LR every N epochs
+  lr_gamma: 0.5              # multiply LR by this factor at each step
+
+  # Loss weights
+  lambda_l1: 100.0           # L1 reconstruction loss weight
+  lambda_clim: 0.1           # climatology consistency loss weight
+
+  # Label smoothing for GAN stability
+  real_label_smooth: 0.9     # target for real samples (instead of 1.0)
+  fake_label_smooth: 0.1     # target for fake samples (instead of 0.0)
+
+  # Checkpointing
+  save_every_n_epochs: 10    # save a periodic checkpoint every N epochs
+  keep_best: true            # always save best_model.pth based on val loss
+
+
+# -----------------------------------------------------------------------------
+# Reproducibility
+# -----------------------------------------------------------------------------
+seed: 42
+
+
+# -----------------------------------------------------------------------------
+# Hardware
+# -----------------------------------------------------------------------------
+hardware:
+  # "cuda" | "cpu" | "auto" (auto-detects GPU if available)
+  device: "auto"
+  pin_memory: true           # faster GPU data transfer; auto-disabled on CPU
